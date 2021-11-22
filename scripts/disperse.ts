@@ -1,17 +1,17 @@
-// npx hardhat run script.js
+// npx hardhat run scripts/disperse.ts
 
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import "ethers";
 import { Signer } from "ethers";
 import { ethers } from "hardhat";
 import { from, to, tokens } from "./addresses";
+import { NonceManager } from "@ethersproject/experimental";
 
 async function main() {
   const ERC20 = await ethers.getContractFactory("MockERC20");
 
   await Promise.all(tokens.map(async token => {
 
-    const signers = await ethers.getSigners();
+    const signers = new NonceManager(await ethers.getSigners());
     const signer = signers.find(_signer => _signer.address === from);
 
     if (!signer) throw Error("Can't sign the tx");
@@ -20,7 +20,7 @@ async function main() {
     const balance = await Token.balanceOf(from);
 
     if (balance.gt(0)) {
-      console.log((await Token.transfer(to, balance)).hash);
+      console.log((await Token.transfer(to, balance, { gasPrice: 31 * 1e9 })).hash);
     }
 
   }));
